@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import UserNotifications
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -15,7 +16,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
-        NSUserNotificationCenter.default.delegate = self
+        if #available(macOS 10.14, *) {
+            UNUserNotificationCenter.current().delegate = self
+        } else {
+            NSUserNotificationCenter.default.delegate = self
+        }
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -29,9 +34,11 @@ extension AppDelegate: NSUserNotificationCenterDelegate {
 
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
         // 通知をタップされた時に呼ばれる
+        print(#function)
     }
 
     func userNotificationCenter(_ center: NSUserNotificationCenter, didDeliver notification: NSUserNotification) {
+        print(#function)
         // アプリが前面にいるときは、通知でないけど、ここは呼ばれる
         if NSApplication.shared.isActive {
             // https://qiita.com/fhisa/items/06d05b25229ee78e44f2
@@ -40,8 +47,20 @@ extension AppDelegate: NSUserNotificationCenterDelegate {
             alert.informativeText = notification.informativeText ?? ""
             alert.runModal()
         }
-
-
     }
 }
 
+@available(macOS 10.14, *)
+extension AppDelegate: UNUserNotificationCenterDelegate {
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Foreground
+        print(#function)
+        completionHandler([.alert, .sound])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        print(#function)
+        completionHandler()
+    }
+}
